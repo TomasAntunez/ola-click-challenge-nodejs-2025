@@ -2,6 +2,7 @@ import { Logger, Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 
 import { OrdersModule } from './orders/orders.module';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { OrdersModule } from './orders/orders.module';
     }),
 
     OrdersModule,
+    SeedModule,
   ],
   providers: [Logger],
 })

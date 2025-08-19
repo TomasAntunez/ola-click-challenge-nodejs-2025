@@ -38,4 +38,8 @@ export class OrdersService {
       );
     });
   }
+
+  countOrders() {
+    return this.orderModel.count();
+  }
 }

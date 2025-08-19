@@ -28,7 +28,7 @@ export class Order extends Model {
   @Column({ type: DataType.STRING })
   declare clientName: string;
 
-  @AllowNull(false)
+  @Default(OrderStatus.INITIATED)
   @Column(DataType.ENUM(...Object.values(OrderStatus)))
   declare status: OrderStatus;
 

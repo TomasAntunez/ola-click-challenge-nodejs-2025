@@ -6,8 +6,8 @@ import { OrdersService } from './orders.service';
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
-  @Get('/example')
-  getExample() {
-    return this.ordersService.getExample();
+  @Get('/')
+  getOrders() {
+    return this.ordersService.getOrders();
   }
 }

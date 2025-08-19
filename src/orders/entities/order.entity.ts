@@ -11,6 +11,12 @@ import {
 
 import { OrderItem } from './order-item.entity';
 
+export enum OrderStatus {
+  INITIATED = 'initiated',
+  SENT = 'sent',
+  DELIVERED = 'delivered',
+}
+
 @Table
 export class Order extends Model {
   @PrimaryKey
@@ -21,6 +27,10 @@ export class Order extends Model {
   @AllowNull(false)
   @Column({ type: DataType.STRING })
   declare clientName: string;
+
+  @AllowNull(false)
+  @Column(DataType.ENUM(...Object.values(OrderStatus)))
+  declare status: OrderStatus;
 
   @HasMany(() => OrderItem, { onDelete: 'CASCADE', as: 'items' })
   declare items: OrderItem[];

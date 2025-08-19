@@ -1,0 +1,13 @@
+/.vscode
+/dist
+/node_modules
+/.git
+
+.env.*
+.gitignore
+.prettierrc
+CHALLENGE.md
+docker-compose.local.yml
+Dockerfile
+eslint.config.mjs
+README.md

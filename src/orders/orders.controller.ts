@@ -1,4 +1,5 @@
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post } from '@nestjs/common';
+import { UuidV4Pipe } from 'src/common';
 
 import { CreateOrderDto } from './dtos/create-order.dto';
 import { OrdersService } from './orders.service';
@@ -12,14 +13,19 @@ export class OrdersController {
     return this.ordersService.getOrders();
   }
 
+  @Get('/:id')
+  getOrderById(@Param('id', UuidV4Pipe) id: string) {
+    return this.ordersService.getOrderById(id);
+  }
+
   @Post('/')
   createOrder(@Body() dto: CreateOrderDto) {
-    return this.ordersService.createOrder(dto);
+    this.ordersService.createOrder(dto);
   }
 
   @HttpCode(204)
   @Post('/:id/advance')
-  advanceOrderStatus(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+  advanceOrderStatus(@Param('id', UuidV4Pipe) id: string) {
     return this.ordersService.advanceOrderStatus(id);
   }
 }

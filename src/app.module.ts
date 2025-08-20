@@ -1,8 +1,8 @@
 import { Logger, Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
 
-import { OrdersModule } from './orders/orders.module';
-import { SeedModule } from './seed/seed.module';
+import { OrdersModule } from './orders';
+import { SeedModule } from './seed';
 
 @Module({
   imports: [

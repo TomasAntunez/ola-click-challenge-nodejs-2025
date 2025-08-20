@@ -17,18 +17,18 @@ export class OrdersService {
     @InjectConnection() private readonly sequelize: Sequelize,
   ) {}
 
-  getOrders() {
+  getOrders(): Promise<Order[]> {
     return this.orderModel.findAll({
       // TODO: map this entity
       where: { status: { [Op.ne]: OrderStatus.DELIVERED } },
     });
   }
 
-  countOrders() {
+  countOrders(): Promise<number> {
     return this.orderModel.count();
   }
 
-  async getOrderById(id: string) {
+  async getOrderById(id: string): Promise<Order> {
     const order = await this.orderModel.findByPk(id);
 
     if (!order) {
@@ -39,9 +39,9 @@ export class OrdersService {
     return order;
   }
 
-  async createOrder(dto: CreateOrderDto) {
-    await this.sequelize.transaction(async (transaction) => {
-      await this.orderModel.create(
+  createOrder(dto: CreateOrderDto): Promise<Order> {
+    return this.sequelize.transaction(async (transaction) => {
+      return await this.orderModel.create(
         {
           clientName: dto.clientName,
           items: dto.items.map((item) => ({
@@ -58,7 +58,7 @@ export class OrdersService {
     });
   }
 
-  async advanceOrderStatus(orderId: string) {
+  async advanceOrderStatus(orderId: string): Promise<void> {
     const order = await this.getOrderById(orderId);
 
     const nextOrderStatus = nextOrderStatusMapper[order.status];

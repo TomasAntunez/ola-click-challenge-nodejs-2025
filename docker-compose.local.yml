@@ -19,10 +19,24 @@ services:
       retries: 30
     restart: unless-stopped
 
+  redis_db:
+    container_name: redis_db
+    image: redis:8-alpine3.22
+    ports:
+      - '${REDIS_PORT}:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    restart: unless-stopped
+
   backend_app:
     container_name: backend_app
     depends_on:
       postgres_db:
+        condition: service_healthy
+      redis_db:
         condition: service_healthy
     build:
       context: ./

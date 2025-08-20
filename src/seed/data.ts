@@ -1,4 +1,6 @@
-export const initialOrdersData = [
+import { CreateOrderDto } from 'src/orders';
+
+export const initialOrdersData: CreateOrderDto[] = [
   {
     clientName: 'John Doe',
     items: [

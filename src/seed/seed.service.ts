@@ -22,10 +22,6 @@ export class SeedService implements OnApplicationBootstrap {
       if (i < this.THIRD_PART) {
         await this.ordersService.advanceOrderStatus(createdOrder.id);
       }
-
-      if (i < this.THIRD_PART * 2) {
-        await this.ordersService.advanceOrderStatus(createdOrder.id);
-      }
     }
   }
 }

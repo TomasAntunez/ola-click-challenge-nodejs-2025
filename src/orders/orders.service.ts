@@ -1,11 +1,13 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { Op, Sequelize } from 'sequelize';
+import { Includeable, Op, Sequelize } from 'sequelize';
 
 import { CreateOrderDto } from './dtos/create-order.dto';
+import { OrderResponseDto } from './dtos/order-response.dto';
 import { Order, OrderStatus } from './entities/order.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { nextOrderStatusMapper } from './mappers/next-order-status.mapper';
+import { OrderMapper } from './mappers/order.mapper';
 
 @Injectable()
 export class OrdersService {
@@ -17,19 +19,25 @@ export class OrdersService {
     @InjectConnection() private readonly sequelize: Sequelize,
   ) {}
 
-  getOrders(): Promise<Order[]> {
-    return this.orderModel.findAll({
-      // TODO: map this entity
+  async getOrders(): Promise<OrderResponseDto[]> {
+    const orders = await this.orderModel.findAll({
       where: { status: { [Op.ne]: OrderStatus.DELIVERED } },
     });
+
+    return orders.map(OrderMapper.toResponseDto);
   }
 
   countOrders(): Promise<number> {
     return this.orderModel.count();
   }
 
-  async getOrderById(id: string): Promise<Order> {
-    const order = await this.orderModel.findByPk(id);
+  async getOrderById(id: string, includeItems?: boolean): Promise<Order> {
+    let includable: Includeable | undefined;
+    if (includeItems) {
+      includable = { model: OrderItem, as: 'items' };
+    }
+
+    const order = await this.orderModel.findByPk(id, { include: includable });
 
     if (!order) {
       this.logger.error(`Order with id ${id} not found`);
@@ -39,9 +47,9 @@ export class OrdersService {
     return order;
   }
 
-  createOrder(dto: CreateOrderDto): Promise<Order> {
+  createOrder(dto: CreateOrderDto): Promise<OrderResponseDto> {
     return this.sequelize.transaction(async (transaction) => {
-      return await this.orderModel.create(
+      const order = await this.orderModel.create(
         {
           clientName: dto.clientName,
           items: dto.items.map((item) => ({
@@ -55,16 +63,25 @@ export class OrdersService {
           transaction: transaction,
         },
       );
+
+      return OrderMapper.toResponseDto(order);
     });
   }
 
   async advanceOrderStatus(orderId: string): Promise<void> {
     const order = await this.getOrderById(orderId);
 
+    this.logger.log(`Advancing order: ${JSON.stringify(order, null, 2)}`);
+
     const nextOrderStatus = nextOrderStatusMapper[order.status];
 
     if (!nextOrderStatus) {
       this.logger.error(`Order with id ${orderId} has no next status - status: ${order.status}`);
+      return;
+    }
+
+    if (nextOrderStatus === OrderStatus.DELIVERED) {
+      await order.destroy();
       return;
     }
 

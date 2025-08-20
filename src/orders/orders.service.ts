@@ -1,8 +1,11 @@
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import type { Cache } from 'cache-manager';
 import { Includeable, Op, Sequelize } from 'sequelize';
+import { EnvironmentVariables } from 'src/common';
 
 import { ORDER_LIST_KEY } from './constants/cache';
 import { CreateOrderDto } from './dtos/create-order.dto';
@@ -20,6 +23,7 @@ export class OrdersService {
     @InjectModel(Order) private readonly orderModel: typeof Order,
     @InjectConnection() private readonly sequelize: Sequelize,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
+    private readonly configService: ConfigService<EnvironmentVariables, true>,
   ) {}
 
   async getOrders(): Promise<OrderResponseDto[]> {
@@ -97,5 +101,21 @@ export class OrdersService {
     order.status = nextOrderStatus;
 
     await order.save();
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_6AM)
+  async removeOldOrders() {
+    this.logger.log('Removing old orders...');
+
+    const cutoffDate = new Date();
+    const daysToRemoveOldOrders = this.configService.get<number>('DAYS_TO_REMOVE_OLD_ORDERS');
+
+    cutoffDate.setDate(cutoffDate.getDate() - daysToRemoveOldOrders);
+
+    const result = await this.orderModel.destroy({
+      where: { createdAt: { [Op.lt]: cutoffDate } },
+    });
+
+    this.logger.log(`Removed ${result} old orders`);
   }
 }

@@ -3,6 +3,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { SequelizeModule } from '@nestjs/sequelize';
 import Keyv from 'keyv';
 
@@ -16,6 +17,8 @@ import { SeedModule } from './seed';
       isGlobal: true,
       validate: validateConfig,
     }),
+
+    ScheduleModule.forRoot(),
 
     SequelizeModule.forRootAsync({
       inject: [ConfigService],

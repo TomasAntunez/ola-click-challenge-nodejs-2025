@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 
 import { CreateOrderDto } from './dtos/create-order.dto';
 import { OrdersService } from './orders.service';
@@ -15,5 +15,11 @@ export class OrdersController {
   @Post('/')
   createOrder(@Body() dto: CreateOrderDto) {
     return this.ordersService.createOrder(dto);
+  }
+
+  @HttpCode(204)
+  @Post('/:id/advance')
+  advanceOrderStatus(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+    return this.ordersService.advanceOrderStatus(id);
   }
 }

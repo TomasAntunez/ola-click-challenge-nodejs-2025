@@ -1,5 +1,8 @@
+import KeyvRedis from '@keyv/redis';
+import { CacheModule } from '@nestjs/cache-manager';
 import { Logger, Module } from '@nestjs/common';
 import { SequelizeModule } from '@nestjs/sequelize';
+import Keyv from 'keyv';
 
 import { OrdersModule } from './orders';
 import { SeedModule } from './seed';
@@ -15,6 +18,18 @@ import { SeedModule } from './seed';
       database: process.env.POSTGRES_DB,
       autoLoadModels: true,
       synchronize: true,
+    }),
+
+    CacheModule.register({
+      isGlobal: true,
+      ttl: Number(process.env.REDIS_DEFAULT_TTL),
+      stores: [
+        new Keyv({
+          store: new KeyvRedis({
+            socket: { host: process.env.REDIS_HOST, port: Number(process.env.REDIS_PORT) },
+          }),
+        }),
+      ],
     }),
 
     OrdersModule,

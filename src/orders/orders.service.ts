@@ -1,7 +1,10 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import type { Cache } from 'cache-manager';
 import { Includeable, Op, Sequelize } from 'sequelize';
 
+import { ORDER_LIST_KEY } from './constants/cache';
 import { CreateOrderDto } from './dtos/create-order.dto';
 import { OrderResponseDto } from './dtos/order-response.dto';
 import { Order, OrderStatus } from './entities/order.entity';
@@ -14,17 +17,19 @@ export class OrdersService {
   private readonly logger = new Logger(OrdersService.name);
 
   constructor(
-    @InjectModel(Order)
-    private readonly orderModel: typeof Order,
+    @InjectModel(Order) private readonly orderModel: typeof Order,
     @InjectConnection() private readonly sequelize: Sequelize,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
   ) {}
 
   async getOrders(): Promise<OrderResponseDto[]> {
-    const orders = await this.orderModel.findAll({
-      where: { status: { [Op.ne]: OrderStatus.DELIVERED } },
-    });
+    return this.cache.wrap(ORDER_LIST_KEY, async () => {
+      const orders = await this.orderModel.findAll({
+        where: { status: { [Op.ne]: OrderStatus.DELIVERED } },
+      });
 
-    return orders.map(OrderMapper.toResponseDto);
+      return orders.map(OrderMapper.toResponseDto);
+    });
   }
 
   countOrders(): Promise<number> {
@@ -64,6 +69,10 @@ export class OrdersService {
         },
       );
 
+      transaction.afterCommit(async () => {
+        await this.cache.del(ORDER_LIST_KEY);
+      });
+
       return OrderMapper.toResponseDto(order);
     });
   }
@@ -71,14 +80,14 @@ export class OrdersService {
   async advanceOrderStatus(orderId: string): Promise<void> {
     const order = await this.getOrderById(orderId);
 
-    this.logger.log(`Advancing order: ${JSON.stringify(order, null, 2)}`);
-
     const nextOrderStatus = nextOrderStatusMapper[order.status];
 
     if (!nextOrderStatus) {
       this.logger.error(`Order with id ${orderId} has no next status - status: ${order.status}`);
       return;
     }
+
+    await this.cache.del(ORDER_LIST_KEY);
 
     if (nextOrderStatus === OrderStatus.DELIVERED) {
       await order.destroy();

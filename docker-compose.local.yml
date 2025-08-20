@@ -51,4 +51,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
+      REDIS_HOST: redis_db
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_DEFAULT_TTL: ${REDIS_DEFAULT_TTL}
     restart: unless-stopped

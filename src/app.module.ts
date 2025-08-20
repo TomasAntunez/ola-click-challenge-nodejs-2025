@@ -1,9 +1,11 @@
 import KeyvRedis from '@keyv/redis';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Logger, Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { SequelizeModule } from '@nestjs/sequelize';
 import Keyv from 'keyv';
 
+import { HttpLoggingInterceptor } from './common';
 import { OrdersModule } from './orders';
 import { SeedModule } from './seed';
 
@@ -35,6 +37,6 @@ import { SeedModule } from './seed';
     OrdersModule,
     SeedModule,
   ],
-  providers: [Logger],
+  providers: [Logger, { provide: APP_INTERCEPTOR, useClass: HttpLoggingInterceptor }],
 })
 export class AppModule {}

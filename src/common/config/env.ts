@@ -47,11 +47,13 @@ export class EnvironmentVariables {
 
   @IsInt()
   @Min(0)
-  readonly REDIS_DEFAULT_TTL: number;
+  @IsOptional()
+  readonly REDIS_DEFAULT_TTL: number = 30000;
 
   @IsInt()
   @Min(0)
-  readonly DAYS_TO_REMOVE_OLD_ORDERS: number;
+  @IsOptional()
+  readonly DAYS_TO_REMOVE_OLD_ORDERS: number = 30;
 }
 
 export const validateConfig = (config: Record<string, unknown>) => {

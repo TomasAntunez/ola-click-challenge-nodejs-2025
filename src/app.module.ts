@@ -1,37 +1,52 @@
 import KeyvRedis from '@keyv/redis';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Logger, Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { SequelizeModule } from '@nestjs/sequelize';
 import Keyv from 'keyv';
 
-import { HttpLoggingInterceptor } from './common';
+import { EnvironmentVariables, HttpLoggingInterceptor, validateConfig } from './common';
 import { OrdersModule } from './orders';
 import { SeedModule } from './seed';
 
 @Module({
   imports: [
-    SequelizeModule.forRoot({
-      dialect: 'postgres',
-      host: process.env.POSTGRES_HOST,
-      port: Number(process.env.POSTGRES_PORT),
-      username: process.env.POSTGRES_USER,
-      password: process.env.POSTGRES_PASSWORD,
-      database: process.env.POSTGRES_DB,
-      autoLoadModels: true,
-      synchronize: true,
+    ConfigModule.forRoot({
+      isGlobal: true,
+      validate: validateConfig,
     }),
 
-    CacheModule.register({
+    SequelizeModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService<EnvironmentVariables, true>) => ({
+        dialect: 'postgres',
+        host: configService.get<string>('POSTGRES_HOST'),
+        port: configService.get<number>('POSTGRES_PORT'),
+        username: configService.get<string>('POSTGRES_USER'),
+        password: configService.get<string>('POSTGRES_PASSWORD'),
+        database: configService.get<string>('POSTGRES_DB'),
+        autoLoadModels: true,
+        synchronize: true,
+      }),
+    }),
+
+    CacheModule.registerAsync({
       isGlobal: true,
-      ttl: Number(process.env.REDIS_DEFAULT_TTL),
-      stores: [
-        new Keyv({
-          store: new KeyvRedis({
-            socket: { host: process.env.REDIS_HOST, port: Number(process.env.REDIS_PORT) },
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService<EnvironmentVariables, true>) => ({
+        ttl: configService.get<number>('REDIS_DEFAULT_TTL'),
+        stores: [
+          new Keyv({
+            store: new KeyvRedis({
+              socket: {
+                host: configService.get<string>('REDIS_HOST'),
+                port: configService.get<number>('REDIS_PORT'),
+              },
+            }),
           }),
-        }),
-      ],
+        ],
+      }),
     }),
 
     OrdersModule,

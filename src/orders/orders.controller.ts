@@ -22,7 +22,7 @@ export class OrdersController {
 
   @Post('/')
   createOrder(@Body() dto: CreateOrderDto) {
-    this.ordersService.createOrder(dto);
+    return this.ordersService.createOrder(dto);
   }
 
   @HttpCode(204)

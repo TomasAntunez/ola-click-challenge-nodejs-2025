@@ -30,7 +30,13 @@ yarn start:docker:local
 yarn start:docker:local:db
 ```
 
-4. Run the following command to run the application
+4. Install dependencies
+
+```bash
+yarn install
+```
+
+5. Run the following command to run the application
 
 ```bash
 yarn start:dev:local

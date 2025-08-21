@@ -9,6 +9,7 @@ RUN yarn install --frozen-lockfile
 FROM base as build
 COPY --from=dev-deps /app/node_modules ./node_modules
 COPY . .
+RUN yarn test
 RUN yarn build
 
 
